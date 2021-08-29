@@ -70,6 +70,174 @@ module.exports = class DappLib {
     }
   }
 
+
+  static async addGame(data) {
+
+    let result = await Blockchain.post({
+      config: DappLib.getConfig(),
+      roles: {
+        proposer: data.signer,
+      }
+    },
+      'game_assets_add_game',
+      {
+        gameId: {value: data.gameId, type: t.String},
+        gameName: {value: data.gameName, type: t.String},
+      }
+    );
+
+    return {
+      type: DappLib.DAPP_RESULT_TX_HASH,
+      label: 'Transaction Hash',
+      result: result.callData.transactionId
+    }
+  }
+
+  static async setUpGamesCollection(data){
+    let result = await Blockchain.post({
+      config: DappLib.getConfig(),
+      roles: {
+        proposer: data.signer,
+      }
+    },
+      'game_assets_setup_games_collection',
+    );
+
+    return {
+      type: DappLib.DAPP_RESULT_TX_HASH,
+      label: 'Transaction Hash',
+      result: result.callData.transactionId
+    }
+  }
+
+  static async setUpGameCollection(data){
+    let result = await Blockchain.post({
+      config: DappLib.getConfig(),
+      roles: {
+        proposer: data.signer,
+      }
+    },
+      'game_assets_init_game_collection',
+      {
+        gameId: {value: data.gameId, type: t.String}
+      }
+    );
+
+    return {
+      type: DappLib.DAPP_RESULT_TX_HASH,
+      label: 'Transaction Hash',
+      result: result.callData.transactionId
+    }
+  }
+
+  static async mintAsset(data){
+    let result = await Blockchain.post({
+      config: DappLib.getConfig(),
+      roles: {
+        proposer: data.acct,
+      }
+    },
+      'game_assets_mint_asset',
+      {
+        gameId: {value: data.gameId, type: t.String},
+        recipient: {value: data.recipient, type: t.Address},
+        metadata: { value: [{ key: 'name', value: data.assetName }, {key: 'power', value: data.assetPower}], type: t.Dictionary({ key: t.String, value: t.String }) }
+      }
+    );
+
+    return {
+      type: DappLib.DAPP_RESULT_TX_HASH,
+      label: 'Transaction Hash',
+      result: result.callData.transactionId
+    }
+  }
+
+  static async transferAsset(data){
+    let result = await Blockchain.post({
+      config: DappLib.getConfig(),
+      roles: {
+        proposer: data.acct,
+      }
+    },
+      'game_assets_transfer_assets',
+      {
+        fromGameId: {value: data.fromGameId, type: t.String},
+        assetId: {value: parseInt(data.assetId), type: t.UInt64},
+        toGameId: {value: data.toGameId, type: t.String},
+        recipient: {value: data.recipient, type: t.Address}
+      }
+    );
+
+    return {
+      type: DappLib.DAPP_RESULT_TX_HASH,
+      label: 'Transaction Hash',
+      result: result.callData.transactionId
+    }
+  }
+
+  static async getAssets(data) {
+
+    let config = DappLib.getConfig();
+    let result = await Blockchain.get({
+      config: config,
+      roles: {
+      }
+    },
+      'game_assets_get_assets',
+      {
+        acct: { value: data.acct, type: t.Address }
+      }
+    );
+    return {
+      type: DappLib.DAPP_RESULT_OBJECT,
+      label: 'Assets',
+      result: result.callData
+    }
+  }
+
+  static async getAssetMetadata(data) {
+
+    let config = DappLib.getConfig();
+    let result = await Blockchain.get({
+      config: config,
+      roles: {
+      }
+    },
+      'game_assets_get_asset_metdata',
+      {
+        acct: { value: data.acct, type: t.Address },
+        gameId: {value: data.gameId, type: t.String},
+        assetId: {value: parseInt(data.assetId), type: t.UInt64}
+      }
+    );
+    return {
+      type: DappLib.DAPP_RESULT_OBJECT,
+      label: 'Asset metadat',
+      result: result.callData
+    }
+  }
+
+
+  static async getGamesList(data) {
+
+    let config = DappLib.getConfig();
+    let result = await Blockchain.get({
+      config: config,
+      roles: {
+      }
+    },
+      'game_assets_get_games_list',
+      {
+        acct: { value: data.acct, type: t.Address }
+      }
+    );
+    return {
+      type: DappLib.DAPP_RESULT_OBJECT,
+      label: 'Games List',
+      result: result.callData
+    }
+  }
+
   static async hasAuthNFT(data) {
 
     let result = await Blockchain.get({
