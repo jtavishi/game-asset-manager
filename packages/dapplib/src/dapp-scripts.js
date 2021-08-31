@@ -7,45 +7,6 @@ const fcl = require("@onflow/fcl");
 
 module.exports = class DappScripts {
 
-	static game_assets_get_assets() {
-		return fcl.script`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				pub fun main(acct: Address): {String: [UInt64]} {
-				  let ref = getAccount(acct).getCapability(/public/GamesCollection)
-				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
-				            ?? panic("Could not borrow the public capability for the recipient's account")
-				
-				  return ref.getOwnedGamesAssets()
-				}
-		`;
-	}
-
-	static game_assets_get_asset_metdata() {
-		return fcl.script`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				pub fun main(acct: Address, gameId: String, assetId: UInt64): {String:String} {
-				  let gamesCollectionRef = getAccount(acct).getCapability(/public/GamesCollection)
-				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
-				            ?? panic("Could not borrow the public capability for the recipient's account")
-				  return gamesCollectionRef.getAssetMetadata(gameId: gameId, assetId: assetId)
-				}
-		`;
-	}
-
-	static game_assets_get_games_list() {
-		return fcl.script`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				pub fun main(acct: Address): {String: String} {
-				  let tenant = getAccount(acct).getCapability(RegistryGamesAssetsContract.TenantPublicPath).borrow<&RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}>()
-				                        ?? panic("Could not borrow the Tenant")
-				  return tenant.getGames()
-				}
-		`;
-	}
-
 	static registry_has_auth_nft() {
 		return fcl.script`
 				import RegistryService from 0x01cf0e2f2f715450
@@ -79,6 +40,45 @@ module.exports = class DappScripts {
 				
 				    return vaultRef.balance
 				}  
+		`;
+	}
+
+	static game_assets_get_asset_metdata() {
+		return fcl.script`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				pub fun main(acct: Address, gameId: String, assetId: UInt64): {String:String} {
+				  let gamesCollectionRef = getAccount(acct).getCapability(/public/GamesCollection)
+				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
+				            ?? panic("Could not borrow the public capability for the recipient's account")
+				  return gamesCollectionRef.getAssetMetadata(gameId: gameId, assetId: assetId)
+				}
+		`;
+	}
+
+	static game_assets_get_assets() {
+		return fcl.script`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				pub fun main(acct: Address): {String: [UInt64]} {
+				  let ref = getAccount(acct).getCapability(/public/GamesCollection)
+				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
+				            ?? panic("Could not borrow the public capability for the recipient's account")
+				
+				  return ref.getOwnedGamesAssets()
+				}
+		`;
+	}
+
+	static game_assets_get_games_list() {
+		return fcl.script`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				pub fun main(acct: Address): {String: String} {
+				  let tenant = getAccount(acct).getCapability(RegistryGamesAssetsContract.TenantPublicPath).borrow<&RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}>()
+				                        ?? panic("Could not borrow the Tenant")
+				  return tenant.getGames()
+				}
 		`;
 	}
 

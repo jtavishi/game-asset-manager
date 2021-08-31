@@ -119,6 +119,7 @@ module.exports = class DappLib {
     },
       'game_assets_init_game_collection',
       {
+        recipient: {value: data.recipient, type:t.Address},
         gameId: {value: data.gameId, type: t.String}
       }
     );

@@ -7,6 +7,147 @@ const fcl = require("@onflow/fcl");
 
 module.exports = class DappTransactions {
 
+	static game_assets_init_game_collection() {
+		return fcl.transaction`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				transaction(recipient: Address, gameId: String) {
+				
+				    let tenant: &RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}
+				    let receiver: &RegistryGamesAssetsContract.GamesCollection?
+				
+				  prepare(acct: AuthAccount) {
+				      self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}>(from: RegistryGamesAssetsContract.TenantStoragePath)
+				                        ?? panic("Could not borrow the Tenant")
+				      self.receiver = getAccount(recipient).getCapability(/public/GamesCollection)
+				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
+				            ?? panic("Could not get receiver reference to the Games Collection")
+				    }
+				
+				  execute {
+				    self.receiver!.initGameCollection(tenant: self.tenant, gameId: gameId)
+				  }
+				}
+				
+				
+		`;
+	}
+
+	static game_assets_mint_asset() {
+		return fcl.transaction`
+				import NonFungibleToken from 0x01cf0e2f2f715450
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				
+				transaction(gameId: String, recipient: Address, metadata: {String: String}) {
+				
+				    let tenant: &RegistryGamesAssetsContract.Tenant
+				    let receiver: &RegistryGamesAssetsContract.GamesCollection
+				
+				    prepare(acct: AuthAccount) {
+				
+				        self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant>(from: RegistryGamesAssetsContract.TenantStoragePath)
+				                        ?? panic("Could not borrow the Tenant")
+				  
+				        self.receiver = getAccount(recipient).getCapability(/public/GamesCollection)
+				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
+				            ?? panic("Could not get receiver reference to the Games Collection")
+				        
+				    }
+				
+				    execute {
+				        let minter = self.tenant.minterRef()
+				
+				        minter.mintAsset(tenant: self.tenant, recipient: self.receiver, gameId: gameId, metadata: metadata)
+				    }
+				}
+		`;
+	}
+
+	static game_assets_setup_games_collection() {
+		return fcl.transaction`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				transaction {
+				
+				  prepare(acct: AuthAccount) {
+				
+				    if acct.borrow<&RegistryGamesAssetsContract.GamesCollection>(from: /storage/GamesCollection) == nil {
+				
+				      let gamesCollection <- RegistryGamesAssetsContract.createEmptyGamesCollection()
+				
+				      acct.save(<-gamesCollection, to: /storage/GamesCollection)
+				
+				      acct.link<&RegistryGamesAssetsContract.GamesCollection>(/public/GamesCollection, target: /storage/GamesCollection)
+				    
+				      log("Gave account a games Collection")
+				    }
+				  }
+				
+				  execute {
+				    
+				  }
+				}
+				
+		`;
+	}
+
+	static game_assets_transfer_assets() {
+		return fcl.transaction`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				import GameDeveloperComposedContract from 0x01cf0e2f2f715450
+				
+				transaction(fromGameId: String, assetId: UInt64, toGameId: String, recipient: Address) {
+				
+				  let tenant: &RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}
+				  let recipient: &RegistryGamesAssetsContract.GamesCollection
+				
+				  prepare(acct: AuthAccount) {
+				
+				    self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}>(from: RegistryGamesAssetsContract.TenantStoragePath)
+				                        ?? panic("Could not borrow the Tenant")
+				    self.recipient = getAccount(recipient).getCapability(/public/GamesCollection)
+				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
+				            ?? panic("Could not get receiver reference to the Games Collection")
+				    
+				  }
+				
+				  execute {
+				    GameDeveloperComposedContract.transferAsset(
+				        tenant: self.tenant,
+				        fromGameId: fromGameId,
+				        assetId: assetId,
+				        toGameId: toGameId,
+				        recipient: self.recipient
+				    )
+				  }
+				}
+				
+		`;
+	}
+
+	static game_assets_add_game() {
+		return fcl.transaction`
+				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
+				
+				transaction(gameId: String, gameName: String) {
+				
+				  let tenant: &RegistryGamesAssetsContract.Tenant
+				
+				  prepare(acct: AuthAccount) {
+				
+				    self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant>(from: RegistryGamesAssetsContract.TenantStoragePath)
+				                        ?? panic("Could not borrow the Tenant")
+				  }
+				
+				  execute {
+				    self.tenant.addGame(gameId: gameId, gameName: gameName)
+				  }
+				}
+				
+		`;
+	}
+
 	static registry_receive_auth_nft() {
 		return fcl.transaction`
 				import RegistryService from 0x01cf0e2f2f715450
@@ -71,142 +212,6 @@ module.exports = class DappTransactions {
 				  }
 				}
 				
-		`;
-	}
-
-	static game_assets_add_game() {
-		return fcl.transaction`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				transaction(gameId: String, gameName: String) {
-				
-				  let tenant: &RegistryGamesAssetsContract.Tenant
-				
-				  prepare(acct: AuthAccount) {
-				
-				    self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant>(from: RegistryGamesAssetsContract.TenantStoragePath)
-				                        ?? panic("Could not borrow the Tenant")
-				  }
-				
-				  execute {
-				    self.tenant.addGame(gameId: gameId, gameName: gameName)
-				  }
-				}
-				
-		`;
-	}
-
-	static game_assets_init_game_collection() {
-		return fcl.transaction`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				transaction(gameId: String) {
-				
-				    let gamesCollectionRef: &RegistryGamesAssetsContract.GamesCollection?
-				
-				  prepare(acct: AuthAccount) {
-				      self.gamesCollectionRef = acct.borrow<&RegistryGamesAssetsContract.GamesCollection>(from: /storage/GamesCollection)?? panic("Can not borrow games collection reference")
-				    }
-				
-				  execute {
-				    self.gamesCollectionRef!.initGameCollection(gameId: gameId)
-				  }
-				}
-				
-				
-		`;
-	}
-
-	static game_assets_setup_games_collection() {
-		return fcl.transaction`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				transaction {
-				
-				  prepare(acct: AuthAccount) {
-				
-				    if acct.borrow<&RegistryGamesAssetsContract.GamesCollection>(from: /storage/GamesCollection) == nil {
-				
-				      let gamesCollection <- RegistryGamesAssetsContract.createEmptyGamesCollection()
-				
-				      acct.save(<-gamesCollection, to: /storage/GamesCollection)
-				
-				      acct.link<&RegistryGamesAssetsContract.GamesCollection>(/public/GamesCollection, target: /storage/GamesCollection)
-				    
-				      log("Gave account a games Collection")
-				    }
-				  }
-				
-				  execute {
-				    
-				  }
-				}
-				
-		`;
-	}
-
-	static game_assets_transfer_assets() {
-		return fcl.transaction`
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				import GameDeveloperComposedContract from 0x01cf0e2f2f715450
-				
-				transaction(fromGameId: String, assetId: UInt64, toGameId: String, recipient: Address) {
-				
-				  let tenant: &RegistryGamesAssetsContract.Tenant
-				  let recipient: &RegistryGamesAssetsContract.GamesCollection
-				
-				  prepare(acct: AuthAccount) {
-				
-				    self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant>(from: RegistryGamesAssetsContract.TenantStoragePath)
-				                        ?? panic("Could not borrow the Tenant")
-				    self.recipient = getAccount(recipient).getCapability(/public/GamesCollection)
-				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
-				            ?? panic("Could not get receiver reference to the Games Collection")
-				    
-				  }
-				
-				  execute {
-				    GameDeveloperComposedContract.transferAsset(
-				        tenant: self.tenant,
-				        fromGameId: fromGameId,
-				        assetId: assetId,
-				        toGameId: toGameId,
-				        recipient: self.recipient
-				    )
-				  }
-				}
-				
-		`;
-	}
-
-	static game_assets_mint_asset() {
-		return fcl.transaction`
-				import NonFungibleToken from 0x01cf0e2f2f715450
-				import RegistryGamesAssetsContract from 0x01cf0e2f2f715450
-				
-				
-				transaction(gameId: String, recipient: Address, metadata: {String: String}) {
-				
-				    let tenant: &RegistryGamesAssetsContract.Tenant
-				    let receiver: &RegistryGamesAssetsContract.GamesCollection
-				
-				    prepare(acct: AuthAccount) {
-				
-				        self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant>(from: RegistryGamesAssetsContract.TenantStoragePath)
-				                        ?? panic("Could not borrow the Tenant")
-				  
-				        self.receiver = getAccount(recipient).getCapability(/public/GamesCollection)
-				            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
-				            ?? panic("Could not get receiver reference to the Games Collection")
-				        
-				    }
-				
-				    execute {
-				        let minter = self.tenant.minterRef()
-				
-				        minter.mintAsset(tenant: self.tenant, recipient: self.receiver, gameId: gameId, metadata: metadata)
-				    }
-				}
 		`;
 	}
 

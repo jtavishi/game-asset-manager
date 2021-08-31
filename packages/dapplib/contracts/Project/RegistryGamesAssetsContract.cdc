@@ -147,9 +147,14 @@ pub contract RegistryGamesAssetsContract: RegistryInterface {
     pub resource GamesCollection {
         pub var ownedGamesAssets: @{String: Collection}
 
-        pub fun initGameCollection(gameId: String){
-            let oldToken <- self.ownedGamesAssets[gameId] <- create Collection()
-            destroy oldToken
+        pub fun initGameCollection(tenant: &Tenant{ITenantMinter}, gameId: String){
+            let supportedGames = tenant.getGames()
+            if supportedGames[gameId] != nil{
+                let oldToken <- self.ownedGamesAssets[gameId] <- create Collection()
+                destroy oldToken
+            } else {
+                panic("game id is not supported")
+            }
         }
 
         pub fun borrowGameCollection(gameId: String): &Collection? {

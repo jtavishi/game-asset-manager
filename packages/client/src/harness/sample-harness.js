@@ -78,8 +78,10 @@ export default class SampleHarness extends LitElement {
 
         <action-card title="User - Init collection for a game"
           description="Setup collection for a game you want to mint Assets for" action="setUpGameCollection"
-          method="post" fields="signer gameId">
-          <account-widget field="signer" label="Account">
+          method="post" fields="signer recipient gameId">
+          <account-widget field="signer" label="Tenant Account">
+          </account-widget>
+          <account-widget field="recipient" label="Recipient Account">
           </account-widget>
           <!--TODO give a dropdown to select game id -->
           <text-widget field="gameId" label="Game ID" placeholder="-brawl-stars"></text-widget>

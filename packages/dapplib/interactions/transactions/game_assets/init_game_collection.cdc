@@ -1,15 +1,20 @@
 import RegistryGamesAssetsContract from Project.RegistryGamesAssetsContract
 
-transaction(gameId: String) {
+transaction(recipient: Address, gameId: String) {
 
-    let gamesCollectionRef: &RegistryGamesAssetsContract.GamesCollection?
+    let tenant: &RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}
+    let receiver: &RegistryGamesAssetsContract.GamesCollection?
 
   prepare(acct: AuthAccount) {
-      self.gamesCollectionRef = acct.borrow<&RegistryGamesAssetsContract.GamesCollection>(from: /storage/GamesCollection)?? panic("Can not borrow games collection reference")
+      self.tenant = acct.borrow<&RegistryGamesAssetsContract.Tenant{RegistryGamesAssetsContract.ITenantMinter}>(from: RegistryGamesAssetsContract.TenantStoragePath)
+                        ?? panic("Could not borrow the Tenant")
+      self.receiver = getAccount(recipient).getCapability(/public/GamesCollection)
+            .borrow<&RegistryGamesAssetsContract.GamesCollection>()
+            ?? panic("Could not get receiver reference to the Games Collection")
     }
 
   execute {
-    self.gamesCollectionRef!.initGameCollection(gameId: gameId)
+    self.receiver!.initGameCollection(tenant: self.tenant, gameId: gameId)
   }
 }
 
